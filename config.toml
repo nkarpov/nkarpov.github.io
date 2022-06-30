@@ -12,7 +12,7 @@ pygmentscodefencesguesssyntax = true
 
 disqusShortname = "yourdiscussshortname"
 
-assetDir=assets
+assetDir="assets"
 
 [params]
   author = "John Doe"
