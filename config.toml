@@ -12,6 +12,8 @@ pygmentscodefencesguesssyntax = true
 
 disqusShortname = "yourdiscussshortname"
 
+assetDir=assets
+
 [params]
   author = "John Doe"
   info = "Full Stack DevOps and Magician"
