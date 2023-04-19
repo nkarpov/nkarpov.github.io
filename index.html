@@ -7,16 +7,26 @@
     </title>
 
     <style>
+        html,
         body {
-            color: black;
+            height: 100%;
         }
 
-        body a {
-            color: inherit;
+        body {
+            margin: 0;
         }
 
-        body li {
-            margin-bottom: 0.5em;
+        .flex-container {
+            height: 100%;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .row {
+            width: auto;
         }
     </style>
 
@@ -24,34 +34,14 @@
 
 <body>
 
-    <h1>Nick Karpov</h1>
+    <div class="flex-container">
+        <div class="row"> 
+            <div>
+                <h1>Nick Karpov</h1>
+            </div>
+        </div>
+    </div>
 
-    <h2>Writing</h2>
-    <ul>
-        <li>
-            <em>2023-03-17</em>
-            <a href=https://www.linkedin.com/pulse/z-order-visualization-implementation-nick-karpov">
-                Z-Order: Visualization and Implementation
-            </a>
-            <em>(originally published on LinkedIn)</em>
-        </li>
-        <li>
-            <em>2023-03-07</em>
-            <a href="https://delta.io/blog/2023-03-07-delta-lake-spark-development/">
-                Getting started contributing to Delta Lake Spark
-            </a>
-            <em>(originally published at delta.io)</em>
-        </li>
-        <li>
-            <em>2023-02-14</em>
-            <a href="https://delta.io/blog/2023-02-14-delta-lake-merge/">
-                Delta Lake MERGE
-            </a>
-            <em>(originally published at delta.io)</em>
-        </li>
-        
-    </ul>
-    
 </body>
 
 </html>
