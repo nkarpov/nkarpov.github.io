@@ -1,0 +1,94 @@
+<html>
+
+<head>
+
+    <title>
+        Nick Karpov
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+
+
+    <style>
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        h1 {
+            margin-bottom: 0;
+        }
+        h3 {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <main class="container">
+        <div>
+            <hgroup>
+                <a href="https://www.nickkarpov.com" target="_self" rel="home" class="no-style-link">
+                    <h1>Nick Karpov</h1>
+                </a>
+                <p>machine learning, queries, storage formats, and samba</p>
+            </hgroup>
+        </div>
+        <div>
+            <hgroup>
+            <h3>Topic Abstracts</h3>
+            <p><i>3-25-2024</i></p>
+            </hgroup>
+            <hr />
+            
+            <p>Below are a series of blurbs on subjects I’ve been noodling on recently. These represent future posts, at the very least, and potentially much larger projects. I’m sharing them here and plan to write about them (and others) more consistently.</p>
+
+                <h4>Delta is History</h4>
+
+            <p>A lot has been written about the Delta Lake and the other table formats, Iceberg and Hudi. Most of what’s been written has been exclusively technical or how-to in nature – some of which I have personally been responsible for. Each origin story of these new species of table formats trend towards technical descriptions of the problem they solve, for understandable reasons, and I think what’s missing is the larger narrative for not only why they exist, but also how the origins differ and what that reveals about broader market trends: past, present, and future. I’ve been working with the Delta Lake project for the better part of the last decade and think there’s a lot of room for that part of the story.
+
+                <h4>Spark is History</h4>
+
+            <p>Similar to the Delta idea but a little more focused on reviewing the project from the perspective of git log —reverse, which is actually the way I learned the innards of the project. It’s amazing how much of today’s Spark was already present in its genesis, and taking a closer look at the original API surface is extremely useful for a deep understanding of how it works.
+
+                <h4>Replace E with 3</h4>
+
+            <p>All the latest transformer based generative text models fail when you ask them to tell you a story while replacing specific characters, like replacing all instances of E and e with the number 3. There are several angles to this problem that begin with tokenization itself, before any model is even applied. There are also many approaches with potential to solve this problem. Whether exploring constrained generation or agents (loosely speaking) - there’s lots that can be written here. All of it useful for greater understanding.
+
+                <h4>Repeat 0000000001 forever</h4>
+
+            <p>You can solve this easily with a loop, but can you solve it with a probabilistic model that you need to train? How? What kind of model and why? Perhaps more importantly, what kind of training data do you need for the desired output? What is the relationship between the training data, the model, and the output for this task? What happens if we model this problem with an extremely minimal GPT decoder block? I think it’s an extraordinary pedagogical problem worth solving from scratch. 
+
+                <h4>LLM Anthropomorphization</h4>
+
+            <p>The language used to talk about the latest generative models is completely broken. Everywhere you turn the model “knows”, “thinks”, “reasons” – it even has “attention”. Since these models “communicate” with us through language, it makes it particularly confusing to discuss their properties. This mishmash of anthropomorphic language appears to deceive even the most seasoned researchers in the field, forget the general public.
+
+                <h4>Learning from deploying large multimodal generative model on Databricks</h4>
+
+            <p>From governance to development UX, there’s no question that Databricks is the best platform to do this from scratch. I recorded a still unreleased video that speedruns through this process but there’s also plenty worth describing in more detail. A lot was learning fumbling around with this.
+
+                <h4>Hacking with CDF</h4>
+
+            <p>The Change Data Feed feature of Delta Lake is amazing. I worked closely with the customers that spearheaded this feature request when I was in the field at Databricks. Although the feature is now well established, there remain some interesting insights around hacking together your own solution. The very ineloquent hint I’ll leave here is “how to hijack the MERGE command from user land to get low overhead CDC”
+
+                <h4>Standalone Uniform</h4>
+
+            <p>The new table formats appear to be converging. There are now new projects and features that attempt to make them transparently compatible. One of those features is Uniform in the Delta Lake project. One of the pitfalls of Uniform is that it's attached to the Spark implementation of Delta (at least today) and only applies when you actually perform an operation through those Spark APIs. There is no API to independently trigger synchronization as a standalone process. I have a working PoC  that uses the guts of the code in the Spark implementation but runs standalone. Getting deeper into this would be good teaching material.
+
+                <h4>Right for the Wrong Reasons</h4>
+
+            <p>The stock market is the easiest place to be right for the wrong reasons and wrong for the right reasons. Isn’t it frustrating when a conclusion you agree with is argued incorrectly? Or worse, reasoned to the opposite? A more abstract, bloggy topic.
+
+                <h4>Real-time 3D reconstructions from drone swarms</h4>
+
+            <p>The progress in AR/VR and AI often mislead me into thinking we can already do things that we aren’t even close to solving. One of those is real time 3d constructions from multiple cheap cameras. I believe this is basically a compute bound problem, but I’ve been meaning to more formally dive into this topic. Imagine you could recreate 3D environments in real time? Why can’t we play CounterStrike on a real-time map? 
+
+        </div>
+    </main>
+
+
+</body>
+
+</html>
