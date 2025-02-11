@@ -1,0 +1,345 @@
+<html>
+
+<head>
+
+    <title>
+        Hacking Delta Lake MERGE with UDFs and Accumulators
+    </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta property="og:title" content="Hacking Delta Lake MERGE with UDFs and Accumulators" />
+    <meta property="og:description" content="A for fun take on hijacking Spark's MERGE with Delta Lake, UDFs, and Accumulators for both learning and profit." />
+    <meta property="og:image" content="https://www.nickkarpov.com/articles/hacking-delta-lake-merge-udf-accumulator/dll.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@datanicks" />
+
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<!-- and it's easy to individually load additional languages -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/go.min.js"></script>
+
+<script>hljs.highlightAll();</script>
+
+    <style>
+        a {
+            text-decoration: none;
+            text-decoration: underline;
+            color: inherit;
+        }
+
+        h1 {
+            margin-bottom: 0;
+        }
+        h3 {
+            margin-bottom: 0;
+        }
+
+        .block {
+            margin-bottom: 1.5em;
+        }
+
+        .block td {
+            padding: 0;
+        }
+
+        .block tr td:first-child {
+            width: 35px;
+        }
+
+        .block tr td:first-child pre {
+            color: #C0C0C0;
+        }
+
+        .block table {
+            margin-bottom: 0;
+            border: 0;
+        }
+
+    </style>
+</head>
+
+<body>
+
+
+    <main class="container">
+        
+        <div>
+            <hgroup>
+            <h3>Hacking Delta Lake MERGE with UDFs and Accumulators</h3>
+            <p>Nick Karpov <br /> <i>4-10-2024</i></p>
+            </hgroup>
+            <hr />
+            <p>A few years ago I was lucky enough to work with some of Databricks' largest customers driving the product requirements of what eventually became <a target="_blank" href="https://delta.io/blog/2023-07-14-delta-lake-change-data-feed-cdf/">Delta Lake's Change Data Feed</a>  (CDF). </p>
+            
+            <p>Despite the success Delta was having it could still be a frustrating user experience at times. On the one hand, Delta catapulted <a href="https://delta-io.github.io/delta-rs/how-delta-lake-works/delta-lake-acid-transactions/" target="_blank">transactional capabilities</a> over Parquet into the mainstream, bringing real ACID-like SQL semantics over cloud based storage. On the other hand, the technology was just nascent enough to still encounter curious and at times fatal edge cases. </p>
+
+            <p>Capturing change data from Delta tables was one of those cases: it was a plain nightmare back then. Any time you needed to work with mutating data downstream you either had to solve how to split and merge your data flow, which was hard to reason about and later maintain, or use the time travel feature to compare the current state of the table to previous versions, which was often prohibitively expensive. Sometimes, you'd have to do both. </p>
+
+            <p>One illustration of the spaghetti we got was reference diagrams like this, which in hindsight is a little awkward for a technology purporting to solve λ-lambda architecture hell. The code to implement these one sentence arrow descriptions is frightening.</p>
+
+            <p><img src="./dll.png" /></p>
+
+            <p>Now today, Delta Lake's Change Data Feed has comprehensive SQL support and is extremely performant. It's actually a critical part of many other innovations on the Databricks platform, like Delta Live Tables and Materialized Views. Still, I find myself reflecting on the clunky pre-CDF era, and discovering that there's much that can be learned from that time.</p>
+
+            <p>In particular is the example I'll spend the rest of this post working through. It's a fun take on how to produce real time change data <b>without</b> the Change Data Feed feature, by leveraging the unique flexibility of Spark to hijack the <code>MERGE</code> command. I like this example because you can actually run it yourself from user land. It's educational for both Spark and Delta, <span style="color: #800; font-weight: 600">a <span style="text-decoration: line-through;">little</span> dangerous</span> (many smart people told me this was a bad idea), and demonstrates that the Spark & Delta engine-storage duo has no real peer.</p>
+        
+            <h4>Accumulate All The Things</h4>
+
+            <p>We'll actually start with one of the long lost features of Spark: accumulators. I say they're long lost because they're now usually only used for internal Spark development and custom extensions. Most end users don't (and honestly shouldn't) really use them.</p>
+
+            <p>The accumulator is one of the original features of Spark: a globally shared variable in your Spark session that all executors have access to. Here's a minimal example of an accumulator that we can add to while applying a function to an RDD. I'm starting here with an RDD to just to highlight how “old” accumulators are.</p>
+
+            <pre><code class="language-python">def add_to_acc(x):
+   global acc
+   acc += x
+
+acc = sc.accumulator(0)
+rdd = sc.parallelize([1,2,3])
+rdd.foreach(add_to_acc)
+
+>>> acc.value
+6</code></pre>
+
+        <p>Accumulators can also be used with the more modern DataFrame APIs. A lot of the statistics collection that occurs under the hood in both Spark and Delta is done via User Defined Functions (UDFs) that update accumulators as a side effect while performing their core operations</p>
+        
+        <pre><code class="language-python">@udf
+def multiply_and_stats(val):
+    global acc
+    acc += val  # side effect collecting stats
+    val *= 2
+    return val
+
+from pyspark.sql.functions import col
+
+acc = sc.accumulator(0)
+
+spark.range(4).withColumn("new", multiply_and_stats(col("id"))).collect()
+
+>>> acc.value
+6</code></pre>
+    
+<p>If you haven't seen an accumulator before, you'll notice that their type is inferred as an integer based on the starting value <code>sc.accumulator(0)</code> in the snippets above. We add to the accumulator via <code>multiply_and_stats</code> by calling it from some higher level map-like construct such as <code>foreach(multiply_and_stats)</code> or <code>withColumn(multiply_and_stats)</code>.</p>
+<p>Accumulators aren't limited to only primitive types though. You have to do a little work implementing the right methods, but it's not too hard to extend support to a <code>list</code> type for example.</p>
+
+            <pre><code>from pyspark.accumulators import AccumulatorParam
+from pyspark.sql.functions import udf
+from pyspark.sql.types import IntegerType
+
+
+class ListAccumulatorParam(AccumulatorParam):
+    def zero(self, initialValue):
+        return []
+
+    def addInPlace(self, v1, v2):
+        v1 += v2
+        return v1
+
+
+list_acc = sc.accumulator([], ListAccumulatorParam())
+
+
+@udf(returnType=IntegerType())
+def add_to_list_accumulator(obj):
+    global list_acc
+    list_acc.add([obj])
+    return obj
+
+
+from pyspark.sql.functions import col
+
+spark.range(4).withColumn("new", add_to_list_accumulator(col("id"))).collect()
+
+>>> list_acc.value
+[1, 3, 2, 0]</code></pre>
+
+            <p>This pattern is actually used by Delta internally. Here's some notable excerpts from <a target="_blank" href="https://github.com/delta-io/delta/blob/64c32071ec0817efd482d64aa20984a8834ced20/spark/src/main/scala/org/apache/spark/sql/delta/commands/merge/ClassicMergeExecutor.scala#L80-L82">the merge command in ClassicMergeExectutor</a> where all the touched files are collected into a <code>SetAccumulator</code> in the first join.</p>
+       
+            <pre><code>// accumulator definition
+val touchedFilesAccum = new SetAccumulator[String]()
+
+// wrap access in a UDF
+val recordTouchedFileName =
+        DeltaUDF.intFromStringBoolean { (fileName, shouldRecord) =>
+        if (shouldRecord) {
+            touchedFilesAccum.add(fileName)
+        }
+        1
+        }.asNondeterministic()
+
+// apply UDF
+val collectTouchedFiles = joinToFindTouchedFiles
+    .select(col(ROW_ID_COL),
+    recordTouchedFileName(col(FILE_NAME_COL), Column(matchedPredicate)).as("one"))
+
+// access accumulator
+val touchedFileNames = touchedFilesAccum.value.iterator().asScala.toSeq</code></pre>
+       
+<p>But what do accumulators have to do with change data?</p>
+
+<p>Well, nothing really. At least not yet. Let's see what happens when we introduce our own accumulators to the king of SQL operations: <code>MERGE</code>.
+</p>
+<h4>MERGE me twice. Won't get MERGEd again.
+</h4>
+<p><code>MERGE</code> is my favorite command. It can conditionally perform every kind of change operation possible with the ACID guarantees of a single transaction. There's nothing else like it (you should study it!). Coupled with Spark's language environment interoperability, it offers near limitless flexibility – which is exactly what we're going to exploit.
+</p>
+<p>Below is a common <code>MERGE</code> users will recognize. You specify a target and source, a join predicate, and define what to do when rows from both tables are either <code>MATCHED</code> or <code>NOT MATCHED</code>. You can stack these clauses and differentiate them with additional predicates as we do below by checking the value of <code>s.type</code>.
+</p>
+<pre><code>MERGE INTO target t
+USING source s
+ON t.id == s.id
+WHEN MATCHED AND s.type = 'UPDATE' THEN
+    UPDATE SET *
+WHEN MATCHED AND s.type = 'DELETE' THEN
+    DELETE
+WHEN NOT MATCHED AND s.type = 'INSERT' THEN
+    INSERT (...) VALUES (...)</code></pre>
+
+<p>The key insight about both types of predicates in the <code>MERGE</code> command is that they are actually just arbitrary expressions that return <code>True</code> or <code>False</code>. We're not limited to simple equality predicates!
+</p>
+
+<p>A UDF is also just an arbitrary expression: a much more powerful one we can customize. Let's do just that with this snippet, where we create a UDF <code>wrapper</code> that takes any number of parameters, adds them to the <code>list</code> accumulator we defined earlier, and then just always returns <code>True</code>.
+</p>
+
+<pre><code>acc = sc.accumulator([], ListAccumulatorParam())
+
+@udf(returnType=BooleanType())
+def wrapper(*obj):
+    acc.add([obj])
+    return True
+
+spark.udf.register("wrapper", wrapper)</code></pre>
+
+<p>Why do we always return <code>True</code>? Well, we actually don't have to, so keep it in mind. We'll return to this point in a bit.
+</p>
+<p>For now, let's make use of this UDF by replacing our existing clause predicates with <code>wrapper(val1, val2, ...)</code>.
+</p>
+
+<pre><code>WITH source AS (
+    SELECT col1 as id, col2 as val FROM VALUES (1, "a"), (2, "b")
+)
+
+MERGE INTO target t
+USING source s
+ON t.id == s.id
+WHEN MATCHED AND wrapper(s.id, s.val, t.id, t.val) THEN
+    UPDATE SET *
+WHEN NOT MATCHED AND wrapper(s.id, s.val) THEN
+    INSERT (id, val) VALUES (s.id, s.val)</code></pre>
+
+<p>Our target is currently empty, so there will be no matches when we run this. Only the <code>INSERT</code> in the <code>WHEN NOT MATCHED</code> clause will trigger. The result is that our target will have the two rows we define in the <code>WITH source AS</code> clause:
+</p>
+
+<pre><code>SELECT * FROM target;
+
++---+---+
+| id|val|
++---+---+
+|  1|  a|
+|  2|  b|
++---+---+</code></pre>
+
+
+<p>Now for the interesting part, what did <code>wrapper</code> do? Let's check the accumulator value.
+</p>
+
+<pre><code class="language-python">>>> acc.value
+[(1, 'a'), (2, 'b')]</code></pre>
+
+<p>Now that's a side effect we can work with! We've stored both rows in memory during the <code>MERGE</code>. Let's reset the accumulator and run the <code>MERGE</code> again. This time our <code>source</code> and <code>target</code> have the exact same data, so we'll end up triggering the actions in the <code>WHEN MATCHED</code> clauses, updating the rows, and finish with an accumulator list like this: 
+</p>
+
+<pre><code>>>> acc.value
+
+[(2, 'b', 2, 'b'),
+(1, 'a', 1, 'a'),
+(1, 'a'),
+(1, 'a', 1, 'a'),
+(2, 'b'),
+(2, 'b', 2, 'b')]</code></pre>
+
+    <p>The values in this list represent every comparison made after source and target were joined by the predicate in the <code>ON</code>. This is because we added the wrapper UDF to both the <code>MATCHED</code> and <code>NOT MATCHED</code> clauses. Since our UDF supports arbitrary number of arguments, we can update the values we pass in to include a tag to make this more clear:
+    </p>
+
+    <pre><code>WHEN MATCHED AND wrapper(..., "MATCHED") 
+WHEN NOT MATCHED AND wrapper(..., "NOT MATCHED") 
+
+>>> acc.value
+
+[(2, 'b', 2, 'b', 'MATCHED'),
+(1, 'a', 1, 'a', 'MATCHED'),
+(1, 'a', 'NOT MATCHED'),
+(1, 'a', 1, 'a', 'MATCHED'),
+(2, 'b', 'NOT MATCHED'),
+(2, 'b', 2, 'b', 'MATCHED')]</code></pre>
+
+    <p>It may feel intuitively wrong to get 6 values in our accumulator when we only had 2 rows in both <code>source</code> and <code>target</code>, and if you squint at the <b>"NOT MATCHED"</b> rows you may wonder why they're present at all. If we're merging two equivalent tables, shouldn't we only have matches?
+    </p>
+<p>Well, we do only have matches, but SQL is declarative, and we've now tapped into the implementation. The values are recorded because the comparisons must actually happen.</p>
+<p>Those clauses in our command that now include the wrapper UDF are expanded for the output columns, so there are multiple nested comparisons happening for each and every row in the result of our join. In other words, there are more comparisons than there are rows. This is also why you can accidentally make your <code>MERGE</code> very very expensive! The gory details of this can be seen in <a href="https://github.com/delta-io/delta/blob/9d4a1a525aa9dbe55623b0b1238ce680fe4df0b5/spark/src/main/scala/org/apache/spark/sql/delta/commands/merge/MergeOutputGeneration.scala#L156-L194" target="_blank">the guts of the MERGE implementation</a>.</p>
+   <p>Anyway, what makes all these details visible in our example is that our wrapper always returns <code>True</code> and always records the values passed into the wrapper. In the boolean expression <code>MATCHED AND True</code>, the <code>True</code> is reduntant, and therefore the expression always simplifies to <code>MATCHED</code>. There is no impact on the logical results of our <code>MERGE</code>; the <code>wrapper(...)</code> call is transparent apart from our desired accumulator side effect.
+</p> 
+
+<h4>So why do all this!?
+</h4>
+
+<p>In most scenarios - you shouldn't! But there <i>are</i> practical uses beyond just learning the inner workings of Spark and Delta. 
+</p>
+
+<p>You can stack these UDFs in places other than the clause conditions, like, for example, the actions within those clauses. In the snippet below we modify our UDF to return its input instead of a boolean. Here's what happens when we use it to wrap the values in our actions.
+</p>
+
+<pre><code>@udf
+def wrapper(obj):
+    acc.add([obj])
+    return obj</code></pre>
+    <pre><code>%sql
+MERGE INTO target t
+USING source s
+ON t.id == s.id
+WHEN MATCHED THEN
+    UPDATE SET val = wrapper(s.val)
+WHEN NOT MATCHED THEN
+    INSERT (val) VALUES (wrapper(s.val))
+</code></pre>
+<pre><code class="language-python">>>> acc.value
+['b', 'a']</code></pre>
+
+<p>Notice that despite having wrapper nested in both action clauses, this time we only get a single result per matching row. This is because we're no longer triggering a transparent wrapper call for every conditional clause check. We're only triggering it when we actually execute the action after the clause is resolved.
+</p>
+<p>The ability to do these kinds of funky things is all coming from how flexible the Spark computing environment is. To mix this core Spark Accumulator feature into a SQL command via an arbitrary Python function directly from user land? What's not to love?
+</p>
+
+<h4>Where to go from here?
+</h4>
+
+<p>With this UDF-Accumulator pattern you can have your own in memory real time change data capture that actually has faster "time to first row" than the core Change Data Feed feature. This is because we hijack the comparisons as we're doing them before we've written any output files. So, for example, if you're doing MERGE in a stream with a long batch time - that means you're waiting a while for something that's already been done!
+</p>
+<p>If you've ever wanted to know which row in your <code>source</code> didn't match your <code>target</code>, which is regularly asked about in Slack and mailing lists, you now not only have a way to do it, but an in memory way that's available to you directly in the Spark session.
+</p>
+<p>You can extend the UDF to do pretty much anything. You could conceivably do all your conditional logic within a UDF instead of the higher level <code>MERGE</code> command. Do you have a REST endpoint you might need to hit? I hope not, of course, but, you should know that you can!
+</p>
+ 
+<h4>Is any of this safe?
+</h4>
+
+<p>This may enrage anyone concerned about the hard earned transactional guarantees of Delta that have been compromised by all of this. After all, we're producing side effects with no respect to the driving transaction. What happens if this fails with partial results? A repeated task? How about scale? Aren't I tipping over my driver node with this? These are all valid concerns. 
+</p>
+
+<p>We've also exposed ourselves to the inner implementation of <code>MERGE</code> that doesn't respect any API contract. What happens when the implementation changes in future versions? Also a good question.</p>
+
+<p>I think knowing how flexible these technologies are is always good. In any case, if this unlocks something for you, you can always engineer and test around the tradeoffs.</p>
+
+<p>Ultimately, I wrote this post to confirm some of my own understanding, and hopefully to provide some deeper insight into what all is happening when you run a <code>MERGE</code> with Spark and Delta. In principle what we've walked through here is how to create an escape hatch from the <code>MERGE</code> command while leveraging its core <code>JOIN</code> and conditional map operations. What's possible from here is just about anything!
+</p>
+
+
+</div>
+    </main>
+
+
+</body>
+
+</html>

@@ -1,0 +1,24 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Daily on Nick Karpov</title>
+    <link>http://localhost:1313/categories/daily/</link>
+    <description>Recent content in Daily on Nick Karpov</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-US</language>
+    <lastBuildDate>Mon, 10 Feb 2025 01:00:00 +0000</lastBuildDate>
+    
+        <atom:link href="http://localhost:1313/categories/daily/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Breadcrumbs</title>
+      <link>http://localhost:1313/2025/01-2024-review/</link>
+      <pubDate>Mon, 10 Feb 2025 01:00:00 +0000</pubDate>
+      
+      <guid>http://localhost:1313/2025/01-2024-review/</guid>
+      <description>&lt;p&gt;Breadcrumbs!!!&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
