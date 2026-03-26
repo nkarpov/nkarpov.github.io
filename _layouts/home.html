@@ -1,0 +1,17 @@
+---
+layout: default
+---
+<p class="tagline">I'm Nick. I build things with data and code, mostly at the intersection of infrastructure and AI. I write here about what I'm learning, building, and thinking about.</p>
+
+<h2>Posts</h2>
+
+<ul class="posts">
+    {% for post in site.posts %}
+    <li>
+        <span class="date">{{ post.date | date: "%Y-%m-%d" }}</span>
+        <a class="title" href="{{ post.url }}">{{ post.title }}</a>
+        {% if post.summary %}<span class="summary">{{ post.summary }}</span>{% endif %}
+        <div style="margin-top: 8px;">{% include pills.html tags=post.tags %}</div>
+    </li>
+    {% endfor %}
+</ul>

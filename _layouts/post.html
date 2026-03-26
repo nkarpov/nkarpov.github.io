@@ -1,0 +1,9 @@
+---
+layout: default
+---
+<article>
+    <a class="back" href="/">&larr; back to posts</a>
+    <div class="post-title">{{ page.title }}</div>
+    <div class="meta">{{ page.date | date: "%Y-%m-%d" }}{% include pills.html tags=page.tags %}</div>
+    {{ content }}
+</article>

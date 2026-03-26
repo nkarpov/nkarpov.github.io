@@ -1,0 +1,21 @@
+title: "Nick Karpov"
+description: "I build things with data and code."
+url: "https://www.nickkarpov.com"
+baseurl: ""
+permalink: /:year/:title/
+
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+plugins:
+  - jekyll-redirect-from
+  - jekyll-sitemap
+  - jekyll-seo-tag
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock

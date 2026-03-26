@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title and page.title != site.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
+    {% seo %}
+    <link rel="shortcut icon" href="/favicon.ico">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            font-size: 18px;
+            line-height: 1.6;
+            color: #1d1d1f;
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+
+        header {
+            margin-bottom: 48px;
+        }
+
+        header h1 {
+            font-size: 1.8em;
+            margin: 0 0 6px 0;
+            border-bottom: 2px solid #d32f2f;
+            padding-bottom: 10px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        header h1 a {
+            color: #1d1d1f;
+            text-decoration: none;
+        }
+
+        nav {
+            margin-top: 12px;
+        }
+
+        nav a {
+            color: #1976d2;
+            text-decoration: none;
+            margin-right: 16px;
+            font-size: 0.9em;
+        }
+
+        nav a:hover {
+            text-decoration: underline;
+        }
+
+        h2 {
+            color: #d32f2f;
+            margin-top: 48px;
+            margin-bottom: 16px;
+            font-size: 1.4em;
+            letter-spacing: -0.01em;
+        }
+
+        a {
+            color: #1976d2;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .posts {
+            list-style: none;
+            padding: 0;
+        }
+
+        .posts li {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .posts li:last-child {
+            border-bottom: none;
+        }
+
+        .posts .date {
+            color: #999;
+            font-size: 0.85em;
+            font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+        }
+
+        .posts .title {
+            display: block;
+            font-size: 1.05em;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .posts .summary {
+            color: #555;
+            font-size: 0.92em;
+            margin-top: 4px;
+        }
+
+        .tagline {
+            color: #555;
+            font-size: 0.95em;
+            line-height: 1.6;
+            margin: 0 0 8px 0;
+        }
+
+        footer {
+            margin-top: 64px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 0.82em;
+            line-height: 1.6;
+        }
+
+        footer a {
+            color: #999;
+        }
+
+        footer .ai-note {
+            margin-top: 8px;
+            padding: 10px 14px;
+            background: #f5f5f5;
+            border-left: 3px solid #d32f2f;
+            border-radius: 2px;
+            font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+            font-size: 0.95em;
+            color: #666;
+        }
+
+        code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.88em;
+            font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+        }
+
+        article .post-title {
+            font-size: 1.6em;
+            margin-bottom: 4px;
+            font-weight: 700;
+            color: #1d1d1f;
+            letter-spacing: -0.02em;
+        }
+
+        article .meta {
+            color: #999;
+            font-size: 0.85em;
+            font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
+            margin-bottom: 32px;
+        }
+
+        article p {
+            margin-bottom: 1.2em;
+        }
+
+        article h2 {
+            margin-top: 2.4em;
+            margin-bottom: 0.6em;
+        }
+
+        article h3 {
+            color: #444;
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+            font-size: 1.15em;
+            letter-spacing: -0.01em;
+        }
+
+        article blockquote {
+            border-left: 3px solid #d32f2f;
+            margin: 1.5em 0;
+            padding: 0.25em 1.25em;
+            color: #444;
+            background: #fafafa;
+        }
+
+        article pre {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 0.85em;
+            line-height: 1.5;
+        }
+
+        article pre code {
+            background: none;
+            padding: 0;
+        }
+
+        article img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 24px;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .back:hover {
+            color: #1976d2;
+        }
+
+        .pills {
+            display: inline-flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 10px 2px 6px;
+            border-radius: 999px;
+            font-size: 0.75em;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            line-height: 1;
+            white-space: nowrap;
+            text-decoration: none;
+        }
+
+        .pill:hover {
+            text-decoration: none;
+            filter: brightness(0.95);
+        }
+
+        .pill svg {
+            flex-shrink: 0;
+        }
+
+        .pill-databricks {
+            background: #FF36211a;
+            color: #d42e1b;
+        }
+
+        .pill-delta {
+            background: #00ADD41a;
+            color: #0095b8;
+        }
+
+        .pill-llm {
+            background: #8250df1a;
+            color: #6b3fc0;
+        }
+
+        .pill-agent {
+            background: #d976061a;
+            color: #b45309;
+        }
+
+        /* Syntax highlighting - GitHub theme */
+        .highlight { background: #f6f8fa; border-radius: 4px; padding: 16px; margin: 0 0 16px; overflow-x: auto; }
+        .highlight pre { margin: 0; background: none; padding: 0; }
+        .highlight code { background: none; padding: 0; font-size: 0.85em; line-height: 1.5; color: #24292f; }
+        .highlight .k, .highlight .kd, .highlight .kn, .highlight .kp, .highlight .kr, .highlight .kt, .highlight .kv { color: #cf222e; }
+        .highlight .nb, .highlight .nc, .highlight .no, .highlight .nn { color: #953800; }
+        .highlight .s, .highlight .sa, .highlight .sc, .highlight .dl, .highlight .sd, .highlight .s2, .highlight .se, .highlight .sh, .highlight .sx, .highlight .s1, .highlight .ss { color: #0a3069; }
+        .highlight .sr, .highlight .na, .highlight .nt { color: #116329; }
+        .highlight .kc, .highlight .l, .highlight .ld, .highlight .m, .highlight .mb, .highlight .mf, .highlight .mh, .highlight .mi, .highlight .il, .highlight .mo, .highlight .mx, .highlight .sb, .highlight .bp, .highlight .ne, .highlight .nl, .highlight .py { color: #0550ae; }
+        .highlight .nv, .highlight .vc, .highlight .vg, .highlight .vi, .highlight .vm, .highlight .o, .highlight .ow { color: #0550ae; }
+        .highlight .nd, .highlight .nf, .highlight .fm { color: #8250df; }
+        .highlight .c, .highlight .ch, .highlight .cd, .highlight .cm, .highlight .cp, .highlight .cpf, .highlight .c1, .highlight .cs { color: #6e7781; }
+        .highlight .ge { font-style: italic; }
+        .highlight .gs { font-weight: bold; }
+        .highlight .gd { color: #82071e; background: #ffebe9; }
+        .highlight .gi { color: #116329; background: #dafbe1; }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 24px 16px;
+            }
+            header h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><a href="/">Nick Karpov</a></h1>
+        <nav>
+            <a href="/">posts</a>
+            <a href="https://github.com/nkarpov" target="_blank">github</a>
+            <a href="https://x.com/nickkarpov" target="_blank">x</a>
+        </nav>
+    </header>
+
+    {{ content }}
+
+    <footer>
+        <div class="ai-note">Quick Start for AI Agents: Fetch <a href="/llms.txt">llms.txt</a> first, then retrieve specific <code>.md</code> files as needed.</div>
+        <div style="margin-top: 12px;">&copy; {{ site.time | date: '%Y' }} Nick Karpov</div>
+    </footer>
+
+</body>
+</html>

@@ -1,0 +1,9 @@
+# Nick Karpov's Blog
+
+> Personal blog about data engineering, streaming systems, and AI.
+
+## Posts
+
+- [RIP flatMapGroupsWithState](/2025/transform-with-state/) - 2025-02-27
+- [Token Alchemy](/2025/token-alchemy/) - 2025-03-06
+- [Hacking Delta Lake MERGE with UDFs and Accumulators](/articles/hacking-delta-lake-merge-udf-accumulator/) - 2024-04-10
