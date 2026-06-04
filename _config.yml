@@ -4,6 +4,21 @@ url: "https://www.nickkarpov.com"
 baseurl: ""
 permalink: /:year/:title/
 
+author:
+  name: "Nick Karpov"
+  twitter: nickkarpov
+
+twitter:
+  username: nickkarpov
+  card: summary_large_image
+
+social:
+  name: "Nick Karpov"
+  links:
+    - https://github.com/nkarpov
+    - https://x.com/nickkarpov
+    - https://www.linkedin.com/in/nick-karpov/
+
 markdown: kramdown
 highlighter: rouge
 kramdown:

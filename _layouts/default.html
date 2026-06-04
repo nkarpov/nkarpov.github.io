@@ -5,6 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if page.title and page.title != site.title %}{{ page.title }} - {{ site.title }}{% else %}{{ site.title }}{% endif %}</title>
     {% seo %}
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "{{ site.url }}/#person",
+          "name": "{{ site.author.name }}",
+          "url": "{{ site.url }}/",
+          "sameAs": [
+            {% for link in site.social.links %}"{{ link }}"{% unless forloop.last %},{% endunless %}{% endfor %}
+          ]
+        },
+        {
+          "@type": "Organization",
+          "@id": "{{ site.url }}/#publisher",
+          "name": "{{ site.title }}",
+          "url": "{{ site.url }}/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "{{ site.url }}/favicon.ico"
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "{{ site.url }}/#website",
+          "url": "{{ site.url }}/",
+          "name": "{{ site.title }}",
+          "publisher": { "@id": "{{ site.url }}/#publisher" }
+        }
+      ]
+    }
+    </script>
     <link rel="shortcut icon" href="/favicon.ico">
     <style>
         body {
@@ -299,6 +332,7 @@
             <a href="/">posts</a>
             <a href="https://github.com/nkarpov" target="_blank">github</a>
             <a href="https://x.com/nickkarpov" target="_blank">x</a>
+            <a href="https://www.linkedin.com/in/nick-karpov/" target="_blank">linkedin</a>
         </nav>
     </header>
 
