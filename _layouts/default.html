@@ -158,17 +158,6 @@
             color: #999;
         }
 
-        footer .ai-note {
-            margin-top: 8px;
-            padding: 10px 14px;
-            background: #f5f5f5;
-            border-left: 3px solid #d32f2f;
-            border-radius: 2px;
-            font-family: "SF Mono", "Fira Code", "Fira Mono", Menlo, monospace;
-            font-size: 0.95em;
-            color: #666;
-        }
-
         code {
             background: #f5f5f5;
             padding: 2px 6px;
@@ -336,8 +325,7 @@
     {{ content }}
 
     <footer>
-        <div class="ai-note">Quick Start for AI Agents: Fetch <a href="/llms.txt">llms.txt</a> first, then retrieve specific <code>.md</code> files as needed.</div>
-        <div style="margin-top: 12px;">&copy; {{ site.time | date: '%Y' }} Nick Karpov</div>
+        <div>&copy; {{ site.time | date: '%Y' }} Nick Karpov</div>
     </footer>
 
 </body>
