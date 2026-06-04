@@ -3,7 +3,7 @@ layout: post
 title: "Why I Still Build Chatbots in 2026"
 date: 2026-06-04
 summary: "Three years of shipping Brickbot, the Data + AI Summit chat assistant, and what each year taught me about how fast this field moves."
-description: "Why building a real chatbot is the best litmus test of AI capabilities, and how Brickbot finally went fully native on Databricks."
+description: "Why building a real chatbot is an honest litmus test of AI capabilities, and how Brickbot finally went fully native on Databricks."
 image: /2026/why-i-still-build-chatbots-in-2026/image.png
 tags: [databricks, agent]
 ---
